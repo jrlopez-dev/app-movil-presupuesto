@@ -22,6 +22,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<PresupuestoProvider>(context);
+    final f = NumberFormat.simpleCurrency(locale: 'en_US', name: '\$', decimalDigits: 2);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial de presupuestos'),
@@ -41,7 +43,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           leading: const Icon(Icons.description),
                           title: Text(p.proyecto),
                           subtitle: Text('${p.cliente} • ${DateFormat.yMMMd('es').format(p.fecha)}'),
-                          trailing: Text(NumberFormat.simpleCurrency(locale: 'es_ES').format(p.total)),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(f.format(p.total), style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text('Restante: ${f.format(p.total - p.montoAnticipo)}', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
                           onTap: () => Navigator.pushNamed(context, '/detail', arguments: p),
                         ),
                       );

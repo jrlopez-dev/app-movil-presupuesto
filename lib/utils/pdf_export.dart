@@ -9,7 +9,7 @@ import '../models/presupuesto.dart';
 class PdfExport {
   static Future<void> exportPresupuestoToPdf(Presupuesto p) async {
     final doc = pw.Document();
-    final f = NumberFormat.simpleCurrency(locale: 'es_ES');
+    final f = NumberFormat.simpleCurrency(locale: 'en_US', name: '\$', decimalDigits: 2);
     doc.addPage(
       pw.Page(
         build: (context) => pw.Container(
@@ -33,6 +33,8 @@ class PdfExport {
               pw.Text('Total: ${f.format(p.total)}', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 6),
               pw.Text('Anticipo: ${p.porcentajeAnticipo.toStringAsFixed(0)}% - ${f.format(p.montoAnticipo)}'),
+              pw.SizedBox(height: 4),
+              pw.Text('Monto restante: ${f.format(p.total - p.montoAnticipo)}'),
             ],
           ),
         ),

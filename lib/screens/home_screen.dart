@@ -14,6 +14,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Presupuesto? editing;
+
   @override
   void initState() {
     super.initState();
@@ -22,16 +24,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final arg = ModalRoute.of(context)?.settings.arguments;
+    if (arg != null && arg is Presupuesto) {
+      editing = arg;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Crear / Editar Presupuesto'),
         actions: [
-          IconButton(
-            tooltip: 'Historial',
-            icon: const Icon(Icons.history),
-            onPressed: () => Navigator.pushNamed(context, '/history'),
-          )
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'history') Navigator.pushNamed(context, '/history');
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'history', child: ListTile(leading: Icon(Icons.history), title: Text('Historial'))),
+            ],
+          ),
         ],
       ),
       body: SafeArea(
@@ -40,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PresupuestoForm(),
+              PresupuestoForm(presupuesto: editing),
             ],
           ),
         ),
