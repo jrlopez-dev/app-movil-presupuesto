@@ -2,6 +2,7 @@ class Presupuesto {
   int? id;
   String proyecto;
   String cliente;
+  String nota;
   DateTime fecha;
   double material;
   double pintura;
@@ -15,6 +16,7 @@ class Presupuesto {
     this.id,
     required this.proyecto,
     required this.cliente,
+    required this.nota,
     required this.fecha,
     required this.material,
     required this.pintura,
@@ -30,6 +32,7 @@ class Presupuesto {
       'id': id,
       'proyecto': proyecto,
       'cliente': cliente,
+      'nota': nota,
       'fecha': fecha.millisecondsSinceEpoch,
       'material': material,
       'pintura': pintura,
@@ -46,6 +49,7 @@ class Presupuesto {
       id: map['id'] as int?,
       proyecto: map['proyecto'] as String,
       cliente: map['cliente'] as String,
+      nota: (map['nota'] as String?) ?? '',
       fecha: DateTime.fromMillisecondsSinceEpoch(map['fecha'] as int),
       material: (map['material'] as num).toDouble(),
       pintura: (map['pintura'] as num).toDouble(),

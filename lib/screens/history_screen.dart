@@ -46,7 +46,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         child: ListTile(
                           leading: const Icon(Icons.description),
                           title: Text(p.proyecto),
-                          subtitle: Text('${p.cliente} • ${DateFormat.yMMMd('es').format(p.fecha)}'),
+                          subtitle: Text(
+                            '${p.cliente} • ${DateFormat.yMMMd('es').format(p.fecha)}\nNota: ${p.nota}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,

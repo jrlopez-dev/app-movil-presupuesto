@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
@@ -18,8 +19,11 @@ class PresupuestoForm extends StatefulWidget {
 
 class _PresupuestoFormState extends State<PresupuestoForm> {
   final _formKey = GlobalKey<FormState>();
+
   final _proyectoCtrl = TextEditingController();
   final _clienteCtrl = TextEditingController();
+  final _notaCtrl = TextEditingController();
+
   DateTime _fecha = DateTime.now();
 
   final _materialCtrl = TextEditingController(text: '0');
@@ -36,6 +40,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
   @override
   void initState() {
     super.initState();
+
     if (widget.presupuesto != null) {
       final p = widget.presupuesto!;
       _proyectoCtrl.text = p.proyecto;
@@ -46,13 +51,16 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       _transporteCtrl.text = p.transporte.toStringAsFixed(2);
       _manoCtrl.text = p.manoObra.toStringAsFixed(2);
       _porcentaje = p.porcentajeAnticipo;
+
+      _notaCtrl.text = p.nota;
+
       _guardado = p.id != null;
       _savedId = p.id;
     }
   }
 
   double _parse(String v) {
-    final cleaned = v.replaceAll(',', '').trim();
+    final cleaned = v.trim().replaceAll(',', '.');
     return double.tryParse(cleaned) ?? 0.0;
   }
 
@@ -78,10 +86,12 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
     final p = Presupuesto(
       id: widget.presupuesto?.id ?? _savedId,
       proyecto: _proyectoCtrl.text.trim(),
       cliente: _clienteCtrl.text.trim(),
+      nota: _notaCtrl.text.trim(),
       fecha: _fecha,
       material: _parse(_materialCtrl.text),
       pintura: _parse(_pinturaCtrl.text),
@@ -99,14 +109,11 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       _savedId = id;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Presupuesto guardado')));
     } else {
-      // actualizar (si fue creado o venía para editar)
       await provider.update(p);
       _guardado = true;
       _savedId = p.id ?? _savedId;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Presupuesto actualizado')));
     }
-
-    // No limpiamos automáticamente los campos; mantenemos los valores para permitir exportar inmediatamente.
   }
 
   Future<void> _exportPdf() async {
@@ -114,10 +121,12 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guarda primero para poder exportar')));
       return;
     }
+
     final p = Presupuesto(
       id: _savedId,
       proyecto: _proyectoCtrl.text.trim(),
       cliente: _clienteCtrl.text.trim(),
+      nota: _notaCtrl.text.trim(),
       fecha: _fecha,
       material: _parse(_materialCtrl.text),
       pintura: _parse(_pinturaCtrl.text),
@@ -135,6 +144,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guarda primero para poder exportar')));
       return;
     }
+
     final bytes = await _screenshotController.capture(pixelRatio: 2.0);
     if (bytes == null) return;
     final file = await ImageCapture.savePng(bytes, 'presupuesto_${_savedId ?? DateTime.now().millisecondsSinceEpoch}');
@@ -145,6 +155,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
   void dispose() {
     _proyectoCtrl.dispose();
     _clienteCtrl.dispose();
+    _notaCtrl.dispose();
     _materialCtrl.dispose();
     _pinturaCtrl.dispose();
     _transporteCtrl.dispose();
@@ -188,16 +199,26 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _notaCtrl,
+                      maxLines: 3,
+                      textInputAction: TextInputAction.newline,
+                      decoration: const InputDecoration(
+                        labelText: 'Nota / Observación',
+                        prefixIcon: Icon(Icons.note_alt_outlined),
+                        alignLabelWithHint: true,
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        Expanded(
-                          child: Text('Fecha: ${DateFormat.yMMMMd('es').format(_fecha)}'),
-                        ),
+                        Expanded(child: Text('Fecha: ${DateFormat.yMMMMd('es').format(_fecha)}')),
                         TextButton.icon(
                           onPressed: _pickDate,
                           icon: const Icon(Icons.calendar_today),
                           label: const Text('Seleccionar'),
-                        )
+                        ),
                       ],
                     ),
                   ],
@@ -234,7 +255,10 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Total: ${f.format(_total)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Total: ${f.format(_total)}',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -251,7 +275,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text('${_porcentaje.toStringAsFixed(0)}%')
+                        Text('${_porcentaje.toStringAsFixed(0)}%'),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -312,6 +336,10 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
     return TextFormField(
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        // Evita letras. Permite: 123 | 123.45 | 123,45
+        FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*[\.,]?[0-9]*$')),
+      ],
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -319,12 +347,13 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       ),
       validator: (v) {
         if (v == null || v.trim().isEmpty) return 'Requerido';
-        final n = double.tryParse(v.replaceAll(',', ''));
+        final normalized = v.trim().replaceAll(',', '.');
+        final n = double.tryParse(normalized);
         if (n == null) return 'Número inválido';
         if (n < 0) return 'No puede ser negativo';
         return null;
       },
-      onChanged: (v) => setState(() {}),
+      onChanged: (_) => setState(() {}),
     );
   }
 }

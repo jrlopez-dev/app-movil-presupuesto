@@ -22,6 +22,8 @@ class PdfExport {
               pw.Text('Proyecto: ${p.proyecto}'),
               pw.Text('Cliente: ${p.cliente}'),
               pw.Text('Fecha: ${DateFormat.yMMMMd('es').format(p.fecha)}'),
+              pw.SizedBox(height: 6),
+              pw.Text('Nota: ${p.nota}'),
               pw.SizedBox(height: 12),
               pw.Text('Desglose:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 6),

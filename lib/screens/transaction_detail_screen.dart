@@ -97,6 +97,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         const SizedBox(height: 4),
                         Text('Cliente: ${p!.cliente}'),
                         Text('Fecha: ${DateFormat.yMMMMd('es').format(p!.fecha)}'),
+                        const SizedBox(height: 6),
+                        Text('Nota: ${p!.nota}'),
                         const Divider(),
                         Text('Material: ${f.format(p!.material)}'),
                         Text('Pintura: ${f.format(p!.pintura)}'),
