@@ -7,6 +7,7 @@ import '../models/presupuesto.dart';
 import '../providers/presupuesto_provider.dart';
 import '../utils/pdf_export.dart';
 import '../utils/image_capture.dart';
+import '../widgets/presupuesto_form.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   const TransactionDetailScreen({super.key});
@@ -57,7 +58,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final bytes = await _screenshotController.capture(pixelRatio: 2.0);
     if (bytes == null) return;
     final file = await ImageCapture.savePng(bytes, 'presupuesto_${p!.id}');
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imagen guardada: ${file.path}')));
+    if (!mounted) return;
+    await showOkDialog(context, title: 'Exportación', message: 'Imagen guardada en:\n${file.path}');
   }
 
   @override

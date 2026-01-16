@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
 
 import '../models/presupuesto.dart';
 import '../providers/presupuesto_provider.dart';
-import '../utils/pdf_export.dart';
 import '../utils/image_capture.dart';
+import '../utils/pdf_export.dart';
+
+Future<void> showOkDialog(BuildContext context, {required String title, required String message}) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
 
 class PresupuestoForm extends StatefulWidget {
   final Presupuesto? presupuesto;
@@ -45,14 +62,13 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       final p = widget.presupuesto!;
       _proyectoCtrl.text = p.proyecto;
       _clienteCtrl.text = p.cliente;
+      _notaCtrl.text = p.nota;
       _fecha = p.fecha;
       _materialCtrl.text = p.material.toStringAsFixed(2);
       _pinturaCtrl.text = p.pintura.toStringAsFixed(2);
       _transporteCtrl.text = p.transporte.toStringAsFixed(2);
       _manoCtrl.text = p.manoObra.toStringAsFixed(2);
       _porcentaje = p.porcentajeAnticipo;
-
-      _notaCtrl.text = p.nota;
 
       _guardado = p.id != null;
       _savedId = p.id;
@@ -107,18 +123,20 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       final id = await provider.add(p);
       _guardado = true;
       _savedId = id;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Presupuesto guardado')));
+      if (!mounted) return;
+      await showOkDialog(context, title: 'Éxito', message: 'Presupuesto guardado correctamente.');
     } else {
       await provider.update(p);
       _guardado = true;
       _savedId = p.id ?? _savedId;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Presupuesto actualizado')));
+      if (!mounted) return;
+      await showOkDialog(context, title: 'Éxito', message: 'Presupuesto actualizado correctamente.');
     }
   }
 
   Future<void> _exportPdf() async {
     if (!_guardado && _savedId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guarda primero para poder exportar')));
+      await showOkDialog(context, title: 'Atención', message: 'Guarda primero el presupuesto para poder exportar.');
       return;
     }
 
@@ -136,19 +154,22 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       porcentajeAnticipo: _porcentaje,
       montoAnticipo: _montoAnticipo,
     );
+
     await PdfExport.exportPresupuestoToPdf(p);
   }
 
   Future<void> _exportImage() async {
     if (!_guardado && _savedId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guarda primero para poder exportar')));
+      await showOkDialog(context, title: 'Atención', message: 'Guarda primero el presupuesto para poder exportar.');
       return;
     }
 
     final bytes = await _screenshotController.capture(pixelRatio: 2.0);
     if (bytes == null) return;
     final file = await ImageCapture.savePng(bytes, 'presupuesto_${_savedId ?? DateTime.now().millisecondsSinceEpoch}');
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imagen guardada: ${file.path}')));
+
+    if (!mounted) return;
+    await showOkDialog(context, title: 'Exportación', message: 'Imagen guardada en:\n${file.path}');
   }
 
   @override
@@ -337,7 +358,6 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        // Evita letras. Permite: 123 | 123.45 | 123,45
         FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*[\.,]?[0-9]*$')),
       ],
       decoration: InputDecoration(
