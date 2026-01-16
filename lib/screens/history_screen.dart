@@ -26,6 +26,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false),
+        ),
         title: const Text('Historial de presupuestos'),
       ),
       body: SafeArea(

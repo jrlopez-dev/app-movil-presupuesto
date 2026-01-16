@@ -30,6 +30,8 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
   double _porcentaje = 0.0;
 
   final ScreenshotController _screenshotController = ScreenshotController();
+  bool _guardado = false;
+  int? _savedId;
 
   @override
   void initState() {
@@ -44,6 +46,8 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       _transporteCtrl.text = p.transporte.toStringAsFixed(2);
       _manoCtrl.text = p.manoObra.toStringAsFixed(2);
       _porcentaje = p.porcentajeAnticipo;
+      _guardado = p.id != null;
+      _savedId = p.id;
     }
   }
 
@@ -75,7 +79,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final p = Presupuesto(
-      id: widget.presupuesto?.id,
+      id: widget.presupuesto?.id ?? _savedId,
       proyecto: _proyectoCtrl.text.trim(),
       cliente: _clienteCtrl.text.trim(),
       fecha: _fecha,
@@ -89,33 +93,29 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
     );
 
     final provider = Provider.of<PresupuestoProvider>(context, listen: false);
-    if (widget.presupuesto == null) {
-      await provider.add(p);
+    if (widget.presupuesto == null && _savedId == null) {
+      final id = await provider.add(p);
+      _guardado = true;
+      _savedId = id;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Presupuesto guardado')));
     } else {
+      // actualizar (si fue creado o venía para editar)
       await provider.update(p);
+      _guardado = true;
+      _savedId = p.id ?? _savedId;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Presupuesto actualizado')));
     }
 
-    // Limpiar formulario si era nuevo
-    if (widget.presupuesto == null) {
-      _formKey.currentState!.reset();
-      _proyectoCtrl.clear();
-      _clienteCtrl.clear();
-      _materialCtrl.text = '0';
-      _pinturaCtrl.text = '0';
-      _transporteCtrl.text = '0';
-      _manoCtrl.text = '0';
-      setState(() {
-        _porcentaje = 0;
-        _fecha = DateTime.now();
-      });
-    }
+    // No limpiamos automáticamente los campos; mantenemos los valores para permitir exportar inmediatamente.
   }
 
   Future<void> _exportPdf() async {
+    if (!_guardado && _savedId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guarda primero para poder exportar')));
+      return;
+    }
     final p = Presupuesto(
-      id: widget.presupuesto?.id,
+      id: _savedId,
       proyecto: _proyectoCtrl.text.trim(),
       cliente: _clienteCtrl.text.trim(),
       fecha: _fecha,
@@ -131,10 +131,13 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
   }
 
   Future<void> _exportImage() async {
+    if (!_guardado && _savedId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guarda primero para poder exportar')));
+      return;
+    }
     final bytes = await _screenshotController.capture(pixelRatio: 2.0);
     if (bytes == null) return;
-    final file = await ImageCapture.savePng(bytes, 'presupuesto_${widget.presupuesto?.id ?? DateTime.now().millisecondsSinceEpoch}');
-    // TODO: compartir con share_plus si se desea
+    final file = await ImageCapture.savePng(bytes, 'presupuesto_${_savedId ?? DateTime.now().millisecondsSinceEpoch}');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Imagen guardada: ${file.path}')));
   }
 
@@ -265,7 +268,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.save),
-                    label: Text(widget.presupuesto == null ? 'GUARDAR' : 'ACTUALIZAR'),
+                    label: Text((widget.presupuesto != null || _savedId != null) ? 'ACTUALIZAR' : 'GUARDAR'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -282,7 +285,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    onPressed: _exportPdf,
+                    onPressed: _guardado ? _exportPdf : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -294,7 +297,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    onPressed: _exportImage,
+                    onPressed: _guardado ? _exportImage : null,
                   ),
                 ),
               ],

@@ -36,6 +36,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false),
+        ),
         title: const Text('Crear / Editar Presupuesto'),
         actions: [
           PopupMenuButton<String>(

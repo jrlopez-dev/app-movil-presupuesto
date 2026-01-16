@@ -67,6 +67,10 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false),
+        ),
         title: const Text('Detalle del presupuesto'),
         actions: [
           IconButton(
@@ -114,7 +118,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   label: const Text('EDITAR'),
                   onPressed: () {
                     // Navegar al formulario principal con el presupuesto como argumento para editar
-                    Navigator.pushNamed(context, '/', arguments: p);
+                    Navigator.pushNamed(context, '/create', arguments: p);
                   },
                 ),
                 const SizedBox(height: 8),

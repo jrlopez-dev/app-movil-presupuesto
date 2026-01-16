@@ -18,9 +18,10 @@ class PresupuestoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> add(Presupuesto p) async {
-    await _db.insertPresupuesto(p);
+  Future<int> add(Presupuesto p) async {
+    final id = await _db.insertPresupuesto(p);
     await loadAll();
+    return id;
   }
 
   Future<void> update(Presupuesto p) async {

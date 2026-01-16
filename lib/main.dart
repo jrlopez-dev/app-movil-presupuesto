@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/presupuesto_provider.dart';
+import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/transaction_detail_screen.dart';
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: '/',
         routes: {
-          '/': (_) => const HomeScreen(),
+          '/': (_) => const WelcomeScreen(),
+          '/create': (_) => const HomeScreen(),
           '/history': (_) => const HistoryScreen(),
           '/detail': (_) => const TransactionDetailScreen(),
         },
