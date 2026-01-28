@@ -6,25 +6,10 @@ import 'package:screenshot/screenshot.dart';
 
 import '../models/presupuesto.dart';
 import '../providers/presupuesto_provider.dart';
+import '../utils/dialogs.dart';
 import '../utils/image_capture.dart';
+import '../utils/money_input_formatter.dart';
 import '../utils/pdf_export.dart';
-
-Future<void> showOkDialog(BuildContext context, {required String title, required String message}) {
-  return showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => AlertDialog(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
 
 class PresupuestoForm extends StatefulWidget {
   final Presupuesto? presupuesto;
@@ -43,16 +28,18 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
 
   DateTime _fecha = DateTime.now();
 
-  final _materialCtrl = TextEditingController(text: '0');
-  final _pinturaCtrl = TextEditingController(text: '0');
-  final _transporteCtrl = TextEditingController(text: '0');
-  final _manoCtrl = TextEditingController(text: '0');
+  final _materialCtrl = TextEditingController(text: '0.00');
+  final _pinturaCtrl = TextEditingController(text: '0.00');
+  final _transporteCtrl = TextEditingController(text: '0.00');
+  final _manoCtrl = TextEditingController(text: '0.00');
 
   double _porcentaje = 0.0;
 
   final ScreenshotController _screenshotController = ScreenshotController();
   bool _guardado = false;
   int? _savedId;
+
+  final _moneyFormatter = MoneyInputFormatter(decimalDigits: 2);
 
   @override
   void initState() {
@@ -64,27 +51,45 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       _clienteCtrl.text = p.cliente;
       _notaCtrl.text = p.nota;
       _fecha = p.fecha;
+
       _materialCtrl.text = p.material.toStringAsFixed(2);
       _pinturaCtrl.text = p.pintura.toStringAsFixed(2);
       _transporteCtrl.text = p.transporte.toStringAsFixed(2);
       _manoCtrl.text = p.manoObra.toStringAsFixed(2);
-      _porcentaje = p.porcentajeAnticipo;
 
+      _porcentaje = p.porcentajeAnticipo;
       _guardado = p.id != null;
       _savedId = p.id;
+    } else {
+      // Asegurar formato inicial
+      _materialCtrl.text = _format2(_materialCtrl.text);
+      _pinturaCtrl.text = _format2(_pinturaCtrl.text);
+      _transporteCtrl.text = _format2(_transporteCtrl.text);
+      _manoCtrl.text = _format2(_manoCtrl.text);
     }
   }
 
-  double _parse(String v) {
-    final cleaned = v.trim().replaceAll(',', '.');
-    return double.tryParse(cleaned) ?? 0.0;
+  String _normalizeMoney(String v) {
+    // Quitar separadores de miles y normalizar decimal.
+    // Ej: "555,550.00" -> "555550.00"
+    return v.trim().replaceAll(',', '');
+  }
+
+  double _parseMoney(String v) {
+    final normalized = _normalizeMoney(v);
+    return double.tryParse(normalized) ?? 0.0;
+  }
+
+  String _format2(String v) {
+    final n = _parseMoney(v);
+    return n.toStringAsFixed(2);
   }
 
   double get _total {
-    return _parse(_materialCtrl.text) +
-        _parse(_pinturaCtrl.text) +
-        _parse(_transporteCtrl.text) +
-        _parse(_manoCtrl.text);
+    return _parseMoney(_materialCtrl.text) +
+        _parseMoney(_pinturaCtrl.text) +
+        _parseMoney(_transporteCtrl.text) +
+        _parseMoney(_manoCtrl.text);
   }
 
   double get _montoAnticipo => (_total * _porcentaje) / 100.0;
@@ -109,10 +114,10 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       cliente: _clienteCtrl.text.trim(),
       nota: _notaCtrl.text.trim(),
       fecha: _fecha,
-      material: _parse(_materialCtrl.text),
-      pintura: _parse(_pinturaCtrl.text),
-      transporte: _parse(_transporteCtrl.text),
-      manoObra: _parse(_manoCtrl.text),
+      material: _parseMoney(_materialCtrl.text),
+      pintura: _parseMoney(_pinturaCtrl.text),
+      transporte: _parseMoney(_transporteCtrl.text),
+      manoObra: _parseMoney(_manoCtrl.text),
       total: _total,
       porcentajeAnticipo: _porcentaje,
       montoAnticipo: _montoAnticipo,
@@ -124,19 +129,19 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       _guardado = true;
       _savedId = id;
       if (!mounted) return;
-      await showOkDialog(context, title: 'Éxito', message: 'Presupuesto guardado correctamente.');
+      await AppDialogs.ok(context, title: 'Éxito', message: 'Presupuesto guardado correctamente.');
     } else {
       await provider.update(p);
       _guardado = true;
       _savedId = p.id ?? _savedId;
       if (!mounted) return;
-      await showOkDialog(context, title: 'Éxito', message: 'Presupuesto actualizado correctamente.');
+      await AppDialogs.ok(context, title: 'Éxito', message: 'Presupuesto actualizado correctamente.');
     }
   }
 
   Future<void> _exportPdf() async {
     if (!_guardado && _savedId == null) {
-      await showOkDialog(context, title: 'Atención', message: 'Guarda primero el presupuesto para poder exportar.');
+      await AppDialogs.ok(context, title: 'Atención', message: 'Guarda primero el presupuesto para poder exportar.');
       return;
     }
 
@@ -146,10 +151,10 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       cliente: _clienteCtrl.text.trim(),
       nota: _notaCtrl.text.trim(),
       fecha: _fecha,
-      material: _parse(_materialCtrl.text),
-      pintura: _parse(_pinturaCtrl.text),
-      transporte: _parse(_transporteCtrl.text),
-      manoObra: _parse(_manoCtrl.text),
+      material: _parseMoney(_materialCtrl.text),
+      pintura: _parseMoney(_pinturaCtrl.text),
+      transporte: _parseMoney(_transporteCtrl.text),
+      manoObra: _parseMoney(_manoCtrl.text),
       total: _total,
       porcentajeAnticipo: _porcentaje,
       montoAnticipo: _montoAnticipo,
@@ -160,7 +165,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
 
   Future<void> _exportImage() async {
     if (!_guardado && _savedId == null) {
-      await showOkDialog(context, title: 'Atención', message: 'Guarda primero el presupuesto para poder exportar.');
+      await AppDialogs.ok(context, title: 'Atención', message: 'Guarda primero el presupuesto para poder exportar.');
       return;
     }
 
@@ -169,7 +174,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
     final file = await ImageCapture.savePng(bytes, 'presupuesto_${_savedId ?? DateTime.now().millisecondsSinceEpoch}');
 
     if (!mounted) return;
-    await showOkDialog(context, title: 'Exportación', message: 'Imagen guardada en:\n${file.path}');
+    await AppDialogs.ok(context, title: 'Exportación', message: 'Imagen guardada en:\n${file.path}');
   }
 
   @override
@@ -358,7 +363,7 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*[\.,]?[0-9]*$')),
+        _moneyFormatter,
       ],
       decoration: InputDecoration(
         labelText: label,
@@ -367,13 +372,24 @@ class _PresupuestoFormState extends State<PresupuestoForm> {
       ),
       validator: (v) {
         if (v == null || v.trim().isEmpty) return 'Requerido';
-        final normalized = v.trim().replaceAll(',', '.');
-        final n = double.tryParse(normalized);
-        if (n == null) return 'Número inválido';
+        final n = _parseMoney(v);
+        if (n.isNaN) return 'Número inválido';
         if (n < 0) return 'No puede ser negativo';
         return null;
       },
       onChanged: (_) => setState(() {}),
+      onEditingComplete: () {
+        // Normalizar a 2 decimales cuando termina de editar.
+        ctrl.text = _format2(ctrl.text);
+        ctrl.selection = TextSelection.fromPosition(TextPosition(offset: ctrl.text.length));
+        FocusScope.of(context).nextFocus();
+        setState(() {});
+      },
+      onTapOutside: (_) {
+        ctrl.text = _format2(ctrl.text);
+        ctrl.selection = TextSelection.fromPosition(TextPosition(offset: ctrl.text.length));
+        setState(() {});
+      },
     );
   }
 }

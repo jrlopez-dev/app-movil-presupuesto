@@ -7,7 +7,7 @@ import '../models/presupuesto.dart';
 import '../providers/presupuesto_provider.dart';
 import '../utils/pdf_export.dart';
 import '../utils/image_capture.dart';
-import '../widgets/presupuesto_form.dart';
+import '../utils/dialogs.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   const TransactionDetailScreen({super.key});
@@ -30,19 +30,17 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   }
 
   void _delete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
-        content: const Text('¿Desea eliminar este presupuesto?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
-        ],
-      ),
+    final confirmed = await AppDialogs.confirm(
+      context,
+      title: 'Confirmar eliminación',
+      message: '¿Desea eliminar este presupuesto?',
+      cancelText: 'Cancelar',
+      okText: 'Eliminar',
     );
-    if (confirmed == true && p != null && p!.id != null) {
+
+    if (confirmed && p != null && p!.id != null) {
       await Provider.of<PresupuestoProvider>(context, listen: false).delete(p!.id!);
+      if (!context.mounted) return;
       Navigator.pop(context);
     }
   }
@@ -59,7 +57,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     if (bytes == null) return;
     final file = await ImageCapture.savePng(bytes, 'presupuesto_${p!.id}');
     if (!mounted) return;
-    await showOkDialog(context, title: 'Exportación', message: 'Imagen guardada en:\n${file.path}');
+    await AppDialogs.ok(context, title: 'Exportación', message: 'Imagen guardada en:\n${file.path}');
   }
 
   @override
