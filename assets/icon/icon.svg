@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <style>.bg{fill:#ffffff}.circle{fill:#f3faf4}.wallet{fill:#2b7a5a}.dollar{fill:#ffffff;font-family:Arial-BoldMT, Arial;font-weight:700;font-size:360px}</style>
+  </defs>
+  <rect width="1024" height="1024" rx="200" class="bg"/>
+  <circle cx="512" cy="480" r="420" class="circle"/>
+
+  <!-- Wallet rectangle -->
+  <rect x="180" y="420" width="664" height="320" rx="36" class="wallet"/>
+  <!-- Wallet flap -->
+  <rect x="180" y="380" width="420" height="120" rx="30" fill="#265f48"/>
+
+  <!-- Dollar sign (stylized) -->
+  <g transform="translate(420, 660) scale(0.9)">
+    <path d="M36.5-380.4c-34.4-10.4-75.2-3.3-107.3 19.6-28.2 20.9-44 48.3-49.8 83.8-7.5 45.5 9.1 91.6 44.3 120.7 23.1 19.3 50.8 32.8 79.8 43.1 24.5 8.5 49.4 16.4 73.9 25.1 27.8 9.8 55.1 21.9 80.6 37.2 38.1 22.5 68.2 52.2 79.3 96.8 12.3 49.9-2.9 103.3-39.6 140.8-31.7 32.5-73.7 49.9-117.4 53.9-26.8 2.6-53.9 1.2-80.6-3.5-18.9-3.4-37.6-8.8-56.2-14.1l-18.5 49.3c21.6 7.1 43.2 12.8 66.2 16.7 49.5 8.1 100.8 10.3 150.8 1.2 82.9-15.3 154.4-66.3 195.2-135.5 45-76 51.1-168.8 13.8-248.2-29.4-63.3-88.3-107.8-156.4-132.9-33.9-12.4-69.8-20.5-105.6-29.7-12.7-3.3-25.6-6.6-38.2-10.7z" fill="#ffffff"/>
+  </g>
+
+</svg>

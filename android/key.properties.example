@@ -1,0 +1,6 @@
+# Ejemplo de key.properties (NO subir al control de versiones)
+# Copia este archivo a android/key.properties y completa las contraseñas
+storePassword=MI_STORE_PASSWORD
+keyPassword=MI_KEY_PASSWORD
+keyAlias=key0
+storeFile=key.jks
